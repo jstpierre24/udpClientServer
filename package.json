@@ -1,0 +1,24 @@
+{
+  "name": "network-examples",
+  "version": "1.0.0",
+  "description": "Networking examples for COMP-445",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "httpudp": "./index.js"
+  },
+  "dependencies": {
+    "yargs": "^4.8.1",
+    "http": "*",
+    "commander": "*",
+    "request": "*",
+    "xmlhttprequest": "*",
+    "socket.io": "*",
+    "socket.io-client": "*",
+    "request": "*",
+    "url": "*",
+    "dgram" : "*",
+    "packet": "0.0.6"
+  }
+}
