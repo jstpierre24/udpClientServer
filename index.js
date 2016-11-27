@@ -31,14 +31,14 @@ program
       v : program.commands[0].v,
       h : program.commands[0].h
     }
-    const length = Buffer.byteLength("Hi s", 'utf8')
+    const length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
     const buf = Buffer.allocUnsafe(length+11)
 
     buf.writeInt8(0, 0);
     buf.writeInt16BE(1, 1);
     ip.toBuffer('127.0.0.1', buf, 5);
     buf.writeInt16BE(8007, 9);
-    buf.write("Hi s", 11);
+    buf.write(JSON.stringify(urlDict), 11);
 
     //   packet_type : 0,
     //   seq_num : 1,
