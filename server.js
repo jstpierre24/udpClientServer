@@ -5,7 +5,8 @@ var fs      = require('fs');
 var request = require('request');
 var url     = require('url');
 var fs      = require('fs');
-var dgram = require('dgram');
+var dgram   = require('dgram');
+var ip      = require('ip');
 
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
@@ -23,7 +24,17 @@ server.on('listening', function () {
 });
 
 server.on('message', function (message, remote) {
-    console.log(remote.address + ':' + remote.port +' - ' + message);
+    const buf = Buffer.from(message);
+
+    console.log(remote.address + ':' + remote.port);
+    console.log(buf.readInt8(0));
+    console.log(buf.readInt16BE(1));
+    console.log(ip.toString(buf, 5, 4));
+    console.log(buf.toString('utf8', 11));
+    // server.send(buf, 3000, 'localhost', function(err, bytes) {
+    //     if (err) throw err;
+    //     console.log('UDP message sent to ' + HOST +':'+ PORT);
+    // });
 
 });
 

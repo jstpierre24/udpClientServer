@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 var program = require('commander');
-const net = require('net');
+const net   = require('net');
 const yargs = require('yargs');
-var http = require('http');
-var io = require('socket.io-client');
-var dgram = require('dgram');
-var ip = require('ip');
+var http    = require('http');
+var io      = require('socket.io-client');
+var dgram   = require('dgram');
+var ip      = require('ip');
 
 
 //use --help to get help
@@ -31,13 +31,14 @@ program
       v : program.commands[0].v,
       h : program.commands[0].h
     }
-    const buf = Buffer.allocUnsafe(1024)
+    const length = Buffer.byteLength("Hi s", 'utf8')
+    const buf = Buffer.allocUnsafe(length+11)
 
     buf.writeInt8(0, 0);
     buf.writeInt16BE(1, 1);
     ip.toBuffer('127.0.0.1', buf, 5);
     buf.writeInt16BE(8007, 9);
-    buf.writeInt8(JSON.stringify(urlDict), 11);
+    buf.write("Hi s", 11);
 
     //   packet_type : 0,
     //   seq_num : 1,
@@ -49,6 +50,7 @@ program
     // Define an IP header pattern using a joined array to explode the pattern.
 
     var client = dgram.createSocket('udp4');
+
     client.send(buf, PORT, HOST, function(err, bytes) {
         if (err) throw err;
         console.log('UDP message sent to ' + HOST +':'+ PORT);
