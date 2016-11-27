@@ -5,7 +5,7 @@ const yargs = require('yargs');
 var http = require('http');
 var io = require('socket.io-client');
 var dgram = require('dgram');
-var parser = require('packet').createParser();
+var ip = require('ip');
 
 
 //use --help to get help
@@ -31,21 +31,25 @@ program
       v : program.commands[0].v,
       h : program.commands[0].h
     }
+    const buf = Buffer.allocUnsafe(1024)
 
-    var p = parser.packet({
-      packet_type : 0,
-      seq_num : 1,
-      peer_ip_addr : '127.0.0.1',
-      peer_port : 8007,
-      payload : JSON.stringify(urlDict)
-    })
+    buf.writeInt8(0, 0);
+    buf.writeInt16BE(1, 1);
+    ip.toBuffer('127.0.0.1', buf, 5);
+    buf.writeInt16BE(8007, 9);
+    buf.writeInt8(JSON.stringify(urlDict), 11);
+
+    //   packet_type : 0,
+    //   seq_num : 1,
+    //   peer_ip_addr : '127.0.0.1',
+    //   peer_port : 8007,
+    //   payload : JSON.stringify(urlDict)
+
 
     // Define an IP header pattern using a joined array to explode the pattern.
 
-
-
     var client = dgram.createSocket('udp4');
-    client.send(p, PORT, HOST, function(err, bytes) {
+    client.send(buf, PORT, HOST, function(err, bytes) {
         if (err) throw err;
         console.log('UDP message sent to ' + HOST +':'+ PORT);
         client.close();
