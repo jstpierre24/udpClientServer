@@ -54,8 +54,19 @@ program
     client.send(buf, PORT, HOST, function(err, bytes) {
         if (err) throw err;
         console.log('UDP message sent to ' + HOST +':'+ PORT);
-        client.close();
+        // client.close();
     });
+    client.on('message', function (message, remote) {
+        const buf = Buffer.from(message);
+
+        console.log(remote.address + ':' + remote.port);
+        console.log(buf.readInt8(0));
+        console.log(buf.readInt16BE(1));
+        console.log(ip.toString(buf, 5, 4));
+        console.log(buf.toString('utf8', 11));
+        client.close();
+    })
+
 	})
 
 program

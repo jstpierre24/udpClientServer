@@ -31,10 +31,11 @@ server.on('message', function (message, remote) {
     console.log(buf.readInt16BE(1));
     console.log(ip.toString(buf, 5, 4));
     console.log(buf.toString('utf8', 11));
-    // server.send(buf, 3000, 'localhost', function(err, bytes) {
-    //     if (err) throw err;
-    //     console.log('UDP message sent to ' + HOST +':'+ PORT);
-    // });
+
+    server.send(buf, 3000, 'localhost', function(err, bytes) {
+        if (err) throw err;
+        console.log('UDP message sent to ' + HOST +':'+ PORT);
+    });
 
 });
 

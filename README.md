@@ -6,14 +6,11 @@
 2. Run `npm install` to install dependencies
 3. Run `npm install -g` to install global curl library
 
-# Run echo server
-
+# Run server
 `node server.js`
 
 # Run separate terminal
+'start the .go Router'
 
-`httpc get 'http://httpbin.org/get?course=networking&assignment=1'`
-`httpc post 'http://httpbin.org/get?course=networking&assignment=1'`
-
-`httpc get -v -h 'http://httpbin.org/get?course=networking&assignment=1'`
-`httpc post -o test.txt -v -h 'http://httpbin.org/get?course=networking&assignment=1'`
+# Run separate terminal
+`httpudp get 'http://httpbin.org/get?course=networking&assignment=1'`
