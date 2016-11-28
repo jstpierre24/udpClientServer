@@ -47,8 +47,6 @@ server.on('message', function (message, remote) {
               output["args"] = args;
               getHeaders(parseUrl, function(headers){
                 output["headers"] = headers;
-                  console.log(output);
-
                   const length = Buffer.byteLength(JSON.stringify(output), 'utf8')
                   const buffer2 = Buffer.allocUnsafe(length)
                   const newBuffer = Buffer.concat([buf, buffer2], length+11);
