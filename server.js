@@ -25,13 +25,13 @@ server.on('listening', function () {
 
 server.on('message', function (message, remote) {
 
-    const buf = Buffer.from(message);
+    var buf = Buffer.from(message);
     console.log(remote.address + ':' + remote.port);
-    console.log(buf.readInt8(0));
-    console.log(buf.readInt16BE(1));
-    console.log(ip.toString(buf, 5, 4));
+    // console.log(buf.readInt8(0));
+    // console.log(buf.readInt16BE(1));
+    // console.log(ip.toString(buf, 5, 4));
     var body = JSON.parse(buf.toString('utf8', 11));
-    console.log(body);
+    // console.log(body);
 
     if(body.type == "get"){
       console.log("get function");
@@ -39,9 +39,32 @@ server.on('message', function (message, remote) {
       var output = {};
       var parseUrl = body["tempUrl"].replace(/'/g,"");
 
-        getStatus(parseUrl).then(function(test){
-          console.log(test);
-        });
+        getStatus(parseUrl, function(StatusLog){
+          output["status"] = StatusLog;
+          getBody(parseUrl, function(body){
+            output["body"] = body;
+            getJsonFromUrl(parseUrl, function(args){
+              output["args"] = args;
+              getHeaders(parseUrl, function(headers){
+                output["headers"] = headers;
+                  console.log(output);
+
+                  const length = Buffer.byteLength(JSON.stringify(output), 'utf8')
+                  const buffer2 = Buffer.allocUnsafe(length)
+                  const newBuffer = Buffer.concat([buf, buffer2], length+11);
+
+                  newBuffer.write(JSON.stringify(output), 11);
+
+                  server.send(newBuffer, 3000, '127.0.0.1', function(err, bytes) {
+                      if (err) throw err;
+                      console.log('UDP message sent to ' + HOST +':'+ 3000);
+                  });
+              })
+            })
+          })
+        })
+
+
         // .then(function(Statuslog){
         //   output["status"] = StatusLog;
         // })
@@ -267,6 +290,7 @@ function postBody(theUrl, callback){
 // part of -v
 //Standard GET status
 function getStatus(theUrl, callback){
+  console.log("in status");
 	request({
 	  url: theUrl,
 	  method: "GET",

@@ -63,8 +63,8 @@ program
         console.log(buf2.readInt8(0));
         console.log(buf2.readInt16BE(1));
         console.log(ip.toString(buf2, 5, 4));
-        console.log(buf2.toString('utf8', 11));
-        client.close();
+        console.log(JSON.parse(buf2.toString('utf8', 11)));
+        // client.close();
     })
 
 	})
