@@ -57,13 +57,13 @@ program
         // client.close();
     });
     client.on('message', function (message, remote) {
-        const buf = Buffer.from(message);
+        const buf2 = Buffer.from(message);
 
         console.log(remote.address + ':' + remote.port);
-        console.log(buf.readInt8(0));
-        console.log(buf.readInt16BE(1));
-        console.log(ip.toString(buf, 5, 4));
-        console.log(buf.toString('utf8', 11));
+        console.log(buf2.readInt8(0));
+        console.log(buf2.readInt16BE(1));
+        console.log(ip.toString(buf2, 5, 4));
+        console.log(buf2.toString('utf8', 11));
         client.close();
     })
 

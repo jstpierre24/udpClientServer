@@ -24,18 +24,53 @@ server.on('listening', function () {
 });
 
 server.on('message', function (message, remote) {
-    const buf = Buffer.from(message);
 
+    const buf = Buffer.from(message);
     console.log(remote.address + ':' + remote.port);
     console.log(buf.readInt8(0));
     console.log(buf.readInt16BE(1));
     console.log(ip.toString(buf, 5, 4));
-    console.log(buf.toString('utf8', 11));
+    var body = JSON.parse(buf.toString('utf8', 11));
+    console.log(body);
 
-    server.send(buf, 3000, 'localhost', function(err, bytes) {
-        if (err) throw err;
-        console.log('UDP message sent to ' + HOST +':'+ PORT);
-    });
+    if(body.type == "get"){
+      console.log("get function");
+
+      var output = {};
+      var parseUrl = body["tempUrl"].replace(/'/g,"");
+
+        getStatus(parseUrl).then(function(test){
+          console.log(test);
+        });
+        // .then(function(Statuslog){
+        //   output["status"] = StatusLog;
+        // })
+        // .then(function(logBody){
+        //   output["body"] = bodyLog;
+        // })
+        // .then(function(userData){
+        //   output["headers"] = userData;
+        // })
+        // .then(function(){
+        //   const length = Buffer.byteLength(JSON.stringify(output), 'utf8')
+        //   const buf2 = Buffer.allocUnsafe(length+11)
+        //
+        //   buf.writeInt8(0, 0);
+        //   buf.writeInt16BE(1, 1);
+        //   ip.toBuffer('127.0.0.1', buf, 5);
+        //   buf.writeInt16BE(3000, 9);
+        //   buf.write(JSON.stringify(output), 11);
+        //
+        //
+        //   server.send(buf, 3000, 'localhost', function(err, bytes) {
+        //       if (err) throw err;
+        //       console.log('UDP message sent to ' + HOST +':'+ PORT);
+        //   });
+        //
+        // })
+
+
+    }
 
 });
 
@@ -166,125 +201,125 @@ server.bind(PORT, HOST);
 // });
 //
 //
-// //Get arguments
-// function getJsonFromUrl(theUrl, callback) {
-//   console.log(theUrl);
-//   var queryString = theUrl.substring( theUrl.indexOf('?') + 1 );
-//   var splits = queryString.split("&");
-//   var args = {};
-//   splits.forEach(function(pair){
-//     var innerSplits = pair.split("=")
-//     args[innerSplits[0]] = innerSplits[1];
-//   });
-//   callback(args);
-// }
-//
-// //Standard GET protocol
-// function getProtocol(theUrl, callback){
-// 	request({
-// 	  url: theUrl,
-// 	  method: "GET",
-// 	  timeout: 10000,
-// 	  followRedirect: true,
-// 	  maxRedirects: 10
-// 	}, function(error, response, body) {
-// 	  callback(response.url);
-// 	});
-// }
-//
-// //Standard POST protocol
-// function postProtocol(theUrl, callback){
-// 	request({
-// 		url: theUrl,
-// 		method: "POST",
-// 		form: {
-// 		name: "Test"
-// 		}
-// 	}, function(error, response, body) {
-//     callback(response.url);
-// 	});
-// }
-//
-//
-// //Standard GET body
-// function getBody(theUrl, callback){
-// 	request({
-// 	  url: theUrl,
-// 	  method: "GET"
-// 	}, function(error, response, body) {
-// 	  callback(body);
-// 	});
-// }
-//
-// //Standard POST body
-// function postBody(theUrl, callback){
-// 	request({
-// 		url: theUrl,
-// 		method: "POST",
-//     form: {
-// 		    name: "Test"
-// 		}
-// 	}, function(error, response, body) {
-//     callback(body);
-// 	});
-// }
-//
-// // part of -v
-// //Standard GET status
-// function getStatus(theUrl, callback){
-// 	request({
-// 	  url: theUrl,
-// 	  method: "GET",
-// 	  timeout: 10000,
-// 	  followRedirect: true,
-// 	  maxRedirects: 10
-// 	}, function(error, response, body) {
-// 	  callback(response.statusCode);
-// 	});
-// }
-//
-// // part of -v
-// //Standard POST status
-// function postStatus(theUrl, callback){
-// 	request({
-// 		url: theUrl,
-// 		method: "POST"
-// 	}, function(error, response, body) {
-//     callback(response.statusCode);
-// 	});
-// }
-//
-// // -h and -v
-// //Standard GET headers
-// function getHeaders(theUrl, callback){
-// 	request({
-// 	  url: theUrl,
-// 	  method: "GET",
-// 	  timeout: 10000,
-// 	  followRedirect: true,
-// 	  maxRedirects: 10
-// 	}, function(error, response, body) {
-// 	  callback(response.headers);
-// 	});
-// }
-//
-// // -h and -v
-// //Standard POST headers
-// function postHeaders(theUrl, callback){
-// 	request({
-// 		url: theUrl,
-// 		method: "POST",
-//     form: {
-// 		name: "Test"
-// 		}
-// 	}, function(error, response, body) {
-//     callback(response.headers);
-// 	});
-// }
-//
-// function writeToFile(filename, towrite){
-//   var wstream = fs.createWriteStream(String(filename));
-//   wstream.write(towrite);
-//   wstream.end();
-//
-// }
+//Get arguments
+function getJsonFromUrl(theUrl, callback) {
+  console.log(theUrl);
+  var queryString = theUrl.substring( theUrl.indexOf('?') + 1 );
+  var splits = queryString.split("&");
+  var args = {};
+  splits.forEach(function(pair){
+    var innerSplits = pair.split("=")
+    args[innerSplits[0]] = innerSplits[1];
+  });
+  callback(args);
+}
+
+//Standard GET protocol
+function getProtocol(theUrl, callback){
+	request({
+	  url: theUrl,
+	  method: "GET",
+	  timeout: 10000,
+	  followRedirect: true,
+	  maxRedirects: 10
+	}, function(error, response, body) {
+	  callback(response.url);
+	});
+}
+
+//Standard POST protocol
+function postProtocol(theUrl, callback){
+	request({
+		url: theUrl,
+		method: "POST",
+		form: {
+		name: "Test"
+		}
+	}, function(error, response, body) {
+    callback(response.url);
+	});
+}
+
+
+//Standard GET body
+function getBody(theUrl, callback){
+	request({
+	  url: theUrl,
+	  method: "GET"
+	}, function(error, response, body) {
+	  callback(body);
+	});
+}
+
+//Standard POST body
+function postBody(theUrl, callback){
+	request({
+		url: theUrl,
+		method: "POST",
+    form: {
+		    name: "Test"
+		}
+	}, function(error, response, body) {
+    callback(body);
+	});
+}
+
+// part of -v
+//Standard GET status
+function getStatus(theUrl, callback){
+	request({
+	  url: theUrl,
+	  method: "GET",
+	  timeout: 10000,
+	  followRedirect: true,
+	  maxRedirects: 10
+	}, function(error, response, body) {
+	    callback(response.statusCode);
+	});
+}
+
+// part of -v
+//Standard POST status
+function postStatus(theUrl, callback){
+	request({
+		url: theUrl,
+		method: "POST"
+	}, function(error, response, body) {
+    callback(response.statusCode);
+	});
+}
+
+// -h and -v
+//Standard GET headers
+function getHeaders(theUrl, callback){
+	request({
+	  url: theUrl,
+	  method: "GET",
+	  timeout: 10000,
+	  followRedirect: true,
+	  maxRedirects: 10
+	}, function(error, response, body) {
+	  callback(response.headers);
+	});
+}
+
+// -h and -v
+//Standard POST headers
+function postHeaders(theUrl, callback){
+	request({
+		url: theUrl,
+		method: "POST",
+    form: {
+		name: "Test"
+		}
+	}, function(error, response, body) {
+    callback(response.headers);
+	});
+}
+
+function writeToFile(filename, towrite){
+  var wstream = fs.createWriteStream(String(filename));
+  wstream.write(towrite);
+  wstream.end();
+
+}
