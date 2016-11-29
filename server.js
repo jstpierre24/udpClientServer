@@ -31,6 +31,7 @@ server.on('message', function (message, remote) {
 
     if(type == 0){
       buf.writeInt8(1,0);
+	  // timeout
       server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
           if (err) throw err;
           console.log('UDP SYN-ACK message sent to ' + HOST +':'+ 3000);
@@ -60,6 +61,7 @@ server.on('message', function (message, remote) {
 
                   newBuffer.writeInt8(4,0);
                   newBuffer.write(JSON.stringify(output), 11);
+				  // timeout
                   server.send(newBuffer, 3000, '127.0.0.1', function(err, bytes) {
                       if (err) throw err;
                       console.log('UDP message sent to ' + HOST +':'+ 3000);

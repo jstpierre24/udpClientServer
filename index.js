@@ -41,6 +41,8 @@ program
     definePacket(0, 1, null);
     // Define an IP header pattern using a joined array to explode the pattern.
     var client = dgram.createSocket('udp4');
+	
+	//  timeout 
     client.send(buf, PORT, HOST, function(err, bytes) {
         if (err) throw err;
         console.log('UDP SYN message sent to ' + HOST +':'+ PORT);
@@ -60,7 +62,8 @@ program
           const newBuffer = Buffer.concat([buf, buffer2], length+11);
           newBuffer.writeInt8(2,0);
           newBuffer.write(JSON.stringify(urlDict), 11);
-
+		
+		  // timeout 
           client.send(newBuffer, PORT, HOST, function(err, bytes) {
               if (err) throw err;
               console.log('UDP ACK message sent to ' + HOST +':'+ PORT);
@@ -76,8 +79,20 @@ program
         else if(type == 4){
           var body = JSON.parse(buf.toString('utf8', 11));
           client.close();
-          console.log(body);
-        }
+		  // output dict.
+          console.log('Status: ' + body.status);
+		  console.log('Body: ' + body.body);
+		  console.log('Args: ');
+				//console.log(JSON.stringify(body["args"]));
+				for (var key in body["args"]) {
+					console.log(key + " : " + body["args"][key]);
+				}
+		  console.log('Headers : ');
+				for (var key in body["headers"]) {
+					console.log(key + " : " + body["headers"][key]);
+				}
+		  
+		  }
 
 
     })
