@@ -40,6 +40,7 @@ server.on('message', function (message, remote) {
     else if(type == 2){
       body = JSON.parse(buf.toString('utf8', 11));
 
+      //GET Functions
       if(body != null && body.type == "get"){
 
         var output = {};
@@ -68,6 +69,12 @@ server.on('message', function (message, remote) {
           })
         })
       }
+
+      //POST FUNCTIONS
+      if(body != null && body.type == "post"){
+
+      }
+
     }
 
 
@@ -80,8 +87,6 @@ server.on('data', function (message, remote) {
 });
 
 server.bind(PORT, HOST);
-
-
 
 
 //Get arguments
