@@ -25,47 +25,82 @@ program
     var HOST = '127.0.0.1';
     // Add a connect listener
 
+    var buf;
     var urlDict = {
       type: "get",
       tempUrl : url,
       v : program.commands[0].v,
       h : program.commands[0].h
     }
-    const length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
-    const buf = Buffer.allocUnsafe(length+11)
 
-    buf.writeInt8(0, 0);
-    buf.writeInt16BE(1, 1);
-    ip.toBuffer('127.0.0.1', buf, 5);
-    buf.writeInt16BE(8007, 9);
-    buf.write(JSON.stringify(urlDict), 11);
+    //syn 0, syn-ack 1, ack 2, nack 3, data 4
 
-    //   packet_type : 0,
-    //   seq_num : 1,
-    //   peer_ip_addr : '127.0.0.1',
-    //   peer_port : 8007,
-    //   payload : JSON.stringify(urlDict)
+    //Start handshake
 
 
+    definePacket(0, 1, null);
     // Define an IP header pattern using a joined array to explode the pattern.
-
     var client = dgram.createSocket('udp4');
-
     client.send(buf, PORT, HOST, function(err, bytes) {
         if (err) throw err;
-        console.log('UDP message sent to ' + HOST +':'+ PORT);
+        console.log('UDP SYN message sent to ' + HOST +':'+ PORT);
         // client.close();
     });
-    client.on('message', function (message, remote) {
-        const buf2 = Buffer.from(message);
 
-        console.log(remote.address + ':' + remote.port);
-        console.log(buf2.readInt8(0));
-        console.log(buf2.readInt16BE(1));
-        console.log(ip.toString(buf2, 5, 4));
-        console.log(JSON.parse(buf2.toString('utf8', 11)));
-        client.close();
+    client.on('message', function (message, remote) {
+        buf = Buffer.from(message);
+        var type = buf.readInt8(0);
+        var seqNum = buf.readInt16BE(1);
+        var address = ip.toString(buf, 5, 4);
+
+        if(type == 1){ // if syn-ack
+          buf.writeInt8(2,0);
+          const length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
+          const buffer2 = Buffer.allocUnsafe(length)
+          const newBuffer = Buffer.concat([buf, buffer2], length+11);
+          newBuffer.writeInt8(2,0);
+          newBuffer.write(JSON.stringify(urlDict), 11);
+
+          client.send(newBuffer, PORT, HOST, function(err, bytes) {
+              if (err) throw err;
+              console.log('UDP ACK message sent to ' + HOST +':'+ PORT);
+              // client.close();
+          });
+        }
+        else if(type == 2){
+
+        }
+        else if(type == 3){
+
+        }
+        else if(type == 4){
+          var body = JSON.parse(buf.toString('utf8', 11));
+          client.close();
+          console.log(body);
+        }
+
+
     })
+
+
+    function definePacket(type, seq, body){
+      var length;
+      if(body!=null){
+        length = Buffer.byteLength(JSON.stringify(body), 'utf8')
+      }
+      else{
+        length = 0
+      }
+      buf = Buffer.allocUnsafe(length+11)
+      buf.writeInt8(type, 0);
+      buf.writeInt16BE(seq, 1);
+      ip.toBuffer('127.0.0.1', buf, 5);
+      buf.writeInt16BE(8007, 9);
+      if(body!=null){
+        buf.write(JSON.stringify(body), 11);
+      }
+    }
+
 
 	})
 
