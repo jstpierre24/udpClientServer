@@ -78,6 +78,7 @@ program
                 var body = JSON.parse(buf.toString('utf8', 11));
                 client.close();
                 // output dict.
+                console.log('Protocol: ' + body.protocol);
                 console.log('Status: ' + body.status);
                 console.log('Body: ' + body.body);
                 console.log('Args: ');
