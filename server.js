@@ -46,6 +46,7 @@ server.on('message', function(message, remote) {
             var parseUrl = body["tempUrl"].replace(/'/g, "");
 
             getStatus(parseUrl, function(StatusLog) {
+                output["protocol"] = "HTTP/1.0";
                 output["status"] = StatusLog;
                 getBody(parseUrl, function(body) {
                     output["body"] = body;
