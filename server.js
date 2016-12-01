@@ -14,7 +14,8 @@ var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 var PORT = 8007;
 var HOST = '127.0.0.1';
-
+var buf;
+var index;
 
 var server = dgram.createSocket('udp4');
 
@@ -24,10 +25,16 @@ server.on('listening', function() {
 });
 
 server.on('message', function(message, remote) {
-
-    var buf = Buffer.from(message);
+    //syn 0, syn-ack 1, ack 2, nack 3, data 4
+    buf = Buffer.from(message);
     var body = null;
-    var type = buf.readInt8(0, 0);
+    var type = buf.readInt8(0);
+    var seqNum = buf.readInt16BE(1);
+    var returnAddress = ip.toString(buf, 5, 4);
+    var returnPort = buf.readUInt16BE(9);
+
+    console.log(returnAddress);
+    console.log(returnPort);
 
     if (type == 0) {
         buf.writeInt8(1, 0);
@@ -37,40 +44,61 @@ server.on('message', function(message, remote) {
             console.log('UDP SYN-ACK message sent to ' + HOST + ':' + 3000);
         });
     } else if (type == 2) {
-        body = JSON.parse(buf.toString('utf8', 11));
+        var body;
+        if (buf.toString('utf8', 11)) {
+            body = JSON.parse(buf.toString('utf8', 11));
+        }
+
 
         //GET Functions
         if (body != null && body.type == "get") {
-
             var output = {};
             var parseUrl = body["tempUrl"].replace(/'/g, "");
 
-            getStatus(parseUrl, function(StatusLog) {
-                output["protocol"] = "HTTP/1.0";
-                output["status"] = StatusLog;
-                getBody(parseUrl, function(body) {
-                    output["body"] = body;
-                    getJsonFromUrl(parseUrl, function(args) {
-                        output["args"] = args;
-                        getHeaders(parseUrl, function(headers) {
-                            output["headers"] = headers;
-                            const length = Buffer.byteLength(JSON.stringify(output), 'utf8')
-                            const buffer2 = Buffer.allocUnsafe(length)
-                            const newBuffer = Buffer.concat([buf, buffer2], length + 11);
+            if (seqNum == -1) {
+                output = {};
+            }
+            if (seqNum == 0) {
+                getStatus(parseUrl, function(StatusLog) {
+                    output["protocol"] = "HTTP/1.0";
+                    output["status"] = StatusLog;
+                    getBody(parseUrl, function(body) {
+                        output["body"] = body;
+                        getJsonFromUrl(parseUrl, function(args) {
+                            output["args"] = args;
+                            getHeaders(parseUrl, function(headers) {
+                                output["headers"] = headers;
+                                var length = Buffer.byteLength(JSON.stringify(body), 'utf8')
+                                if (length > 1013) {
+                                    index = 1012;
+                                    definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output)[0, index], 1013)
+                                    server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
+                                        if (err) throw err;
+                                        console.log('UDP message sent to ' + HOST + ':' + 3000);
+                                    });
+                                } else {
+                                    definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output), Buffer.byteLength(JSON.stringify(output), 'utf8'))
+                                    server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
+                                        if (err) throw err;
+                                        console.log('UDP message sent to ' + HOST + ':' + 3000);
+                                    });
+                                }
 
-                            newBuffer.writeInt8(4, 0);
-                            newBuffer.write(JSON.stringify(output), 11);
-                            // timeout
-                            server.send(newBuffer, 3000, '127.0.0.1', function(err, bytes) {
-                                if (err) throw err;
-                                console.log('UDP message sent to ' + HOST + ':' + 3000);
-                            });
+                            })
                         })
                     })
                 })
-            })
-        }
+            } else if (index < Buffer.byteLength(JSON.stringify(body), 'utf8')) {
 
+                definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output)[index += 1, index += 1011], 1013)
+
+                server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
+                    if (err) throw err;
+                    console.log('UDP message sent to ' + HOST + ':' + 3000);
+                });
+            }
+
+        }
         //POST FUNCTIONS
         if (body != null && body.type == "post") {
 
@@ -89,6 +117,16 @@ server.on('data', function(message, remote) {
 
 server.bind(PORT, HOST);
 
+function definePacket(type, seq, a, p, payload, length) {
+    buf = Buffer.allocUnsafe(length + 11)
+    buf.writeInt8(type, 0);
+    buf.writeInt16BE(seq, 1);
+    ip.toBuffer(a, buf, 5);
+    buf.writeUInt16BE(p, 9);
+    if (payload != null) {
+        buf.write(payload, 11);
+    }
+}
 
 //Get arguments
 function getJsonFromUrl(theUrl, callback) {

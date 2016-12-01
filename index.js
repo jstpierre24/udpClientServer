@@ -39,7 +39,7 @@ program
         //Start handshake
 
 
-        definePacket(0, 1, null);
+        definePacket(0, 0, HOST, 8007, null, 0);
         // Define an IP header pattern using a joined array to explode the pattern.
         var client = dgram.createSocket('udp4');
 
@@ -55,17 +55,14 @@ program
             var type = buf.readInt8(0);
             var seqNum = buf.readInt16BE(1);
             var address = ip.toString(buf, 5, 4);
+            var body = '';
 
             if (type == 1) { // if syn-ack
-                buf.writeInt8(2, 0);
-                const length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
-                const buffer2 = Buffer.allocUnsafe(length)
-                const newBuffer = Buffer.concat([buf, buffer2], length + 11);
-                newBuffer.writeInt8(2, 0);
-                newBuffer.write(JSON.stringify(urlDict), 11);
+                var length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
+                definePacket(2, 0, HOST, 8007, JSON.stringify(urlDict), length)
 
                 // timeout
-                client.send(newBuffer, PORT, HOST, function(err, bytes) {
+                client.send(buf, PORT, HOST, function(err, bytes) {
                     if (err) throw err;
                     console.log('UDP ACK message sent to ' + HOST + ':' + PORT);
                     // client.close();
@@ -75,21 +72,48 @@ program
             } else if (type == 3) {
 
             } else if (type == 4) {
-                var body = JSON.parse(buf.toString('utf8', 11));
-                client.close();
-                // output dict.
-                console.log(body.protocol);
-                console.log(body.status);
-                console.log(body.body);
-                console.log('Args: ');
-                //console.log(JSON.stringify(body["args"]));
-                for (var key in body["args"]) {
-                    console.log(key + " : " + body["args"][key]);
+                body = buf.toString('utf8', 11);
+                // console.log(body);
+                try {
+                    body = JSON.parse(body);
+                    definePacket(2, -1, HOST, PORT, null, 0);
+                    client.send(buf, PORT, HOST, function(err, bytes) {
+                        if (err) throw err;
+                        console.log('UDP end ACK message sent to ' + HOST + ':' + PORT);
+                        client.close();
+                    });
+
+                    // output dict.
+                    console.log(body.protocol + " " + body.status);
+
+                    if (urlDict.v) {
+                        console.log('Headers : ');
+                        for (var key in body["headers"]) {
+                            console.log(key + " : " + body["headers"][key]);
+                        }
+                    }
+
+
+                    console.log('Args: ');
+                    //console.log(JSON.stringify(body["args"]));
+                    for (var key in body["args"]) {
+                        console.log(key + " : " + body["args"][key]);
+                    }
+                    console.log(body.body);
+                } catch (e) {
+                    console.log(e);
+                    var length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8');
+                    definePacket(2, 1, HOST, 8007, JSON.stringify(urlDict), length);
+
+                    client.send(buf, PORT, HOST, function(err, bytes) {
+                        if (err) throw err;
+                        console.log('UDP ACK message sent to ' + HOST + ':' + PORT);
+                    });
                 }
-                console.log('Headers : ');
-                for (var key in body["headers"]) {
-                    console.log(key + " : " + body["headers"][key]);
-                }
+
+
+
+
 
             }
 
@@ -97,20 +121,14 @@ program
         })
 
 
-        function definePacket(type, seq, body) {
-            var length;
-            if (body != null) {
-                length = Buffer.byteLength(JSON.stringify(body), 'utf8')
-            } else {
-                length = 0
-            }
+        function definePacket(type, seq, a, p, payload, length) {
             buf = Buffer.allocUnsafe(length + 11)
             buf.writeInt8(type, 0);
             buf.writeInt16BE(seq, 1);
-            ip.toBuffer('127.0.0.1', buf, 5);
-            buf.writeInt16BE(8007, 9);
-            if (body != null) {
-                buf.write(JSON.stringify(body), 11);
+            ip.toBuffer(a, buf, 5);
+            buf.writeUInt16BE(p, 9);
+            if (payload != null) {
+                buf.write(payload, 11);
             }
         }
 
