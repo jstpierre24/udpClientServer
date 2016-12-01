@@ -14,3 +14,4 @@
 
 # Run separate terminal
 `httpudp get 'http://httpbin.org/get?course=networking&assignment=1'`
+`httpudp get -v 'http://httpbin.org/get?course=networking&assignment=1'`
