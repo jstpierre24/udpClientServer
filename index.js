@@ -27,6 +27,8 @@ program
         // Add a connect listener
 
         var buf;
+        var length;
+        var body;
         var urlDict = {
             type: "get",
             tempUrl: url,
@@ -55,10 +57,10 @@ program
             var type = buf.readInt8(0);
             var seqNum = buf.readInt16BE(1);
             var address = ip.toString(buf, 5, 4);
-            var body = '';
+            body = '';
 
             if (type == 1) { // if syn-ack
-                var length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
+                length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8')
                 definePacket(2, 0, HOST, 8007, JSON.stringify(urlDict), length)
 
                 // timeout
@@ -72,8 +74,8 @@ program
             } else if (type == 3) {
 
             } else if (type == 4) {
-                body = buf.toString('utf8', 11);
-                // console.log(body);
+                body += buf.toString('utf8', 11);
+                console.log(body);
                 try {
                     body = JSON.parse(body);
                     definePacket(2, -1, HOST, PORT, null, 0);
@@ -103,7 +105,8 @@ program
                 } catch (e) {
                     console.log(e);
                     var length = Buffer.byteLength(JSON.stringify(urlDict), 'utf8');
-                    definePacket(2, 1, HOST, 8007, JSON.stringify(urlDict), length);
+
+                    definePacket(2, seqNum, HOST, 8007, JSON.stringify(urlDict), length);
 
                     client.send(buf, PORT, HOST, function(err, bytes) {
                         if (err) throw err;

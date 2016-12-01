@@ -16,6 +16,7 @@ var PORT = 8007;
 var HOST = '127.0.0.1';
 var buf;
 var index;
+var output = {};
 
 var server = dgram.createSocket('udp4');
 
@@ -27,14 +28,11 @@ server.on('listening', function() {
 server.on('message', function(message, remote) {
     //syn 0, syn-ack 1, ack 2, nack 3, data 4
     buf = Buffer.from(message);
-    var body = null;
     var type = buf.readInt8(0);
     var seqNum = buf.readInt16BE(1);
     var returnAddress = ip.toString(buf, 5, 4);
     var returnPort = buf.readUInt16BE(9);
 
-    console.log(returnAddress);
-    console.log(returnPort);
 
     if (type == 0) {
         buf.writeInt8(1, 0);
@@ -44,16 +42,18 @@ server.on('message', function(message, remote) {
             console.log('UDP SYN-ACK message sent to ' + HOST + ':' + 3000);
         });
     } else if (type == 2) {
-        var body;
+        var payload;
         if (buf.toString('utf8', 11)) {
-            body = JSON.parse(buf.toString('utf8', 11));
+            payload = JSON.parse(buf.toString('utf8', 11));
         }
 
 
         //GET Functions
-        if (body != null && body.type == "get") {
-            var output = {};
-            var parseUrl = body["tempUrl"].replace(/'/g, "");
+        if (payload != null && payload.type == "get") {
+            // console.log(index);
+            // console.log(Buffer.byteLength(JSON.stringify(output), 'utf8'));
+            //
+            var parseUrl = payload["tempUrl"].replace(/'/g, "");
 
             if (seqNum == -1) {
                 output = {};
@@ -70,7 +70,9 @@ server.on('message', function(message, remote) {
                                 output["headers"] = headers;
                                 var length = Buffer.byteLength(JSON.stringify(body), 'utf8')
                                 if (length > 1013) {
+
                                     index = 1012;
+                                    console.log(index);
                                     definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output)[0, index], 1013)
                                     server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
                                         if (err) throw err;
@@ -88,9 +90,20 @@ server.on('message', function(message, remote) {
                         })
                     })
                 })
-            } else if (index < Buffer.byteLength(JSON.stringify(body), 'utf8')) {
-
+            } else if (index < Buffer.byteLength(JSON.stringify(output), 'utf8')) {
+                console.log(index);
+                console.log(Buffer.byteLength(JSON.stringify(output), 'utf8'));
                 definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output)[index += 1, index += 1011], 1013)
+
+                server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
+                    if (err) throw err;
+                    console.log('UDP message sent to ' + HOST + ':' + 3000);
+                });
+            } else {
+                console.log("end");
+                console.log(index);
+                console.log(Buffer.byteLength(JSON.stringify(output), 'utf8'));
+                definePacket(4, seqNum + 1, returnAddress, returnPort, JSON.stringify(output)[index += 1, Buffer.byteLength(JSON.stringify(output), 'utf8')], Buffer.byteLength(JSON.stringify(output), 'utf8') - index - 1)
 
                 server.send(buf, 3000, '127.0.0.1', function(err, bytes) {
                     if (err) throw err;
@@ -100,7 +113,7 @@ server.on('message', function(message, remote) {
 
         }
         //POST FUNCTIONS
-        if (body != null && body.type == "post") {
+        if (payload != null && payload.type == "post") {
 
         }
 
